@@ -2,7 +2,7 @@
 
 We provide the pytorch implementation of the spatial-temporal attention neural network (STANet) for remote sensing image change detection.
 
-![image-20200601213320103](C:\Users\JUSTCHENHAO\OneDrive\write\CD\code\STANet\src\stanet-overview.png)
+![image-20200601213320103](.\src\stanet-overview.png)
 
 ## Prerequisites
 
