@@ -1,6 +1,8 @@
 # STANet for remote sensing image change detection
 
-We provide the pytorch implementation of the spatial-temporal attention neural network (STANet) for remote sensing image change detection.
+It is the implementation of the paper: A Spatial-Temporal Attention-Based Method and a New Dataset for Remote Sensing Image Change Detection.
+
+Here, we provide the pytorch implementation of the spatial-temporal attention neural network (STANet) for remote sensing image change detection.
 
 ![image-20200601213320103](/src/stanet-overview.png)
 
