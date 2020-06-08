@@ -98,7 +98,7 @@ You could edit the file val.py, for example:
 if __name__ == '__main__':
     opt = TestOptions().parse()   # get training options
     opt = make_val_opt(opt)
-    opt.phase = 'test'
+    opt.phase = 'val'
     opt.dataroot = 'path-to-LEVIR-CD-test' # data root 
     opt.dataset_mode = 'changedetection'
     opt.n_class = 2
@@ -114,6 +114,10 @@ if __name__ == '__main__':
 
 then run the script: `python val.py`. Once finished, you can find the prediction log file in the project directory and predicted image files in the result directory.
 
+## Pre-train Module
+
+Here, we provide the PAM pre-train model: [download-link](https://pan.baidu.com/s/1ysWk-ljJ0wh_YEURiC_wsw), [code:l3o7].
+
 ## Other TIPS
 
 For more Training/Testing guides, you could see the option files in the  `./options/`  folder.
@@ -123,7 +127,7 @@ For more Training/Testing guides, you could see the option files in the  `./opti
 If you use this code for your research, please cite our papers.
 
 ```
-@Article{rs12101662,
+@Article{chen2020,
 AUTHOR = {Chen, Hao and Shi, Zhenwei},
 TITLE = {A Spatial-Temporal Attention-Based Method and a New Dataset for Remote Sensing Image Change Detection},
 JOURNAL = {Remote Sensing},

@@ -75,7 +75,7 @@ def val(opt):
 if __name__ == '__main__':
     opt = TestOptions().parse()   # get training options
     opt = make_val_opt(opt)
-    opt.phase = 'test'
+    opt.phase = 'val'
     opt.dataroot = 'path-to-LEVIR-CD-test'
 
     opt.dataset_mode = 'changedetection'
