@@ -116,7 +116,7 @@ then run the script: `python val.py`. Once finished, you can find the prediction
 
 ## Pre-train Module
 
-Here, we provide the PAM pre-train model: [download-link](https://pan.baidu.com/s/1ysWk-ljJ0wh_YEURiC_wsw), [code:l3o7].
+Here, we provide the PAM pre-train model: [baidu-download-link, code:l3o7](https://pan.baidu.com/s/1ysWk-ljJ0wh_YEURiC_wsw), [google-download-link](https://drive.google.com/file/d/196bR8LdSfVawnSOVmM_YPW25UetucUYX/view?usp=sharing, https://drive.google.com/file/d/1QOjoa-YFvHOgCLXaxvZUlrlidihpmbWU/view?usp=sharing).
 
 ## Other TIPS
 
