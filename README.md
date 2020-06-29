@@ -13,7 +13,7 @@ Here, we provide the pytorch implementation of the spatial-temporal attention ne
 - CPU or NVIDIA GPU
 - CUDA 9.0+
 - PyTorch > 1.0
-- visdom
+- visdom==0.1.8.1
 
 ## Installation
 

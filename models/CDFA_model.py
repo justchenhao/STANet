@@ -50,7 +50,6 @@ class CDFAModel(BaseModel):
             self.optimizer_A = torch.optim.Adam(self.netA.parameters(), lr=opt.lr*1, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_A)
-            self.isweighted = opt.weighted
 
 
     def set_input(self, input):
