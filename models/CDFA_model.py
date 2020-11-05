@@ -79,7 +79,8 @@ class CDFAModel(BaseModel):
                 metrics.update(self.L.detach().cpu().numpy(), pred.detach().cpu().numpy())
                 scores = metrics.get_cm()
                 return scores
-
+            else:
+                return self.pred_L.long()
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""

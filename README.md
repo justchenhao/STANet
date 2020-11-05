@@ -6,6 +6,18 @@ Here, we provide the pytorch implementation of the spatial-temporal attention ne
 
 ![image-20200601213320103](/src/stanet-overview.png)
 
+## Change log
+
+20201105：
+
+- add a demo for quick start.
+- add more dataset loader modes.
+- enhance the image augmentation module (crop and rotation).
+
+20200601：
+
+- first commit
+
 ## Prerequisites
 
 - windows or Linux 
@@ -13,7 +25,7 @@ Here, we provide the pytorch implementation of the spatial-temporal attention ne
 - CPU or NVIDIA GPU
 - CUDA 9.0+
 - PyTorch > 1.0
-- visdom==0.1.8.1
+- visdom
 
 ## Installation
 
@@ -25,6 +37,16 @@ cd STANet
 ```
 
 Install [PyTorch](http://pytorch.org/) 1.0+ and other dependencies (e.g., torchvision, [visdom](https://github.com/facebookresearch/visdom) and [dominate](https://github.com/Knio/dominate))
+
+## Quick Start
+
+You can run a demo to get started. 
+
+```bash
+python demo.py
+```
+
+The input samples are in `samples`. After successfully run this script, you can find the predicted results in `samples/output`.
 
 ## Prepare Datasets
 
@@ -98,7 +120,7 @@ You could edit the file val.py, for example:
 if __name__ == '__main__':
     opt = TestOptions().parse()   # get training options
     opt = make_val_opt(opt)
-    opt.phase = 'val'
+    opt.phase = 'test'
     opt.dataroot = 'path-to-LEVIR-CD-test' # data root 
     opt.dataset_mode = 'changedetection'
     opt.n_class = 2
@@ -114,9 +136,70 @@ if __name__ == '__main__':
 
 then run the script: `python val.py`. Once finished, you can find the prediction log file in the project directory and predicted image files in the result directory.
 
-## Pre-train Module
+## Using other dataset mode
 
-Here, we provide the PAM pre-train model: [baidu-download-link, code:l3o7](https://pan.baidu.com/s/1ysWk-ljJ0wh_YEURiC_wsw), [google-download-link](https://drive.google.com/drive/folders/1QZOYP-N2Nr27aDG38zTVJMunfzmrseLv?usp=sharing).
+### List mode
+
+```bash
+list=train
+lr=0.001
+dataset_mode=list
+dataroot=path-to-dataroot
+name=project_name
+
+python ./train.py --num_threads 4 --display_id 0 --dataroot ${dataroot} --val_dataroot ${dataroot} --save_epoch_freq 1 --niter 100 --angle 15 --niter_decay 100  --display_env FAp0 --SA_mode PAM --name $name --lr $lr --model CDFA --batch_size 4 --dataset_mode $dataset_mode --val_dataset_mode $dataset_mode --split $list --load_size 256 --crop_size 256 --preprocess resize_rotate_and_crop
+```
+
+In this case, the data structure should be the following:
+
+```
+"""
+data structure
+-dataroot
+    ├─A
+        ├─train1.png
+        ...
+    ├─B
+        ├─train1.png
+        ...
+    ├─label
+        ├─train1.png
+        ...
+    └─list
+        ├─val.txt
+        ├─test.txt
+        └─train.txt
+
+# In list/train.txt, each low writes the filename of each sample,
+   # for example:
+       list/train.txt
+           train1.png
+           train2.png
+           ...
+"""
+```
+
+### Concat mode for loading multiple datasets (each default mode is List)
+
+```bash
+list=train
+lr=0.001
+dataset_type=CD_data1,CD_data2,...,
+val_dataset_type=CD_data
+dataset_mode=concat
+name=project_name
+
+python ./train.py --num_threads 4 --display_id 0 --dataset_type $dataset_type --val_dataset_type $val_dataset_type --save_epoch_freq 1 --niter 100 --angle 15 --niter_decay 100  --display_env FAp0 --SA_mode PAM --name $name --lr $lr --model CDFA --batch_size 4 --dataset_mode $dataset_mode --val_dataset_mode $dataset_mode --split $list --load_size 256 --crop_size 256 --preprocess resize_rotate_and_crop
+```
+
+Note, in this case, you should modify the `get_dataset_info` in `data/data_config.py` to add the corresponding ` dataset_name` and `dataroot` in it.
+
+```python
+if dataset_type == 'LEVIR_CD':
+    root = 'path-to-LEVIR_CD-dataroot'
+elif ...
+# add more dataset ...
+```
 
 ## Other TIPS
 
@@ -127,7 +210,7 @@ For more Training/Testing guides, you could see the option files in the  `./opti
 If you use this code for your research, please cite our papers.
 
 ```
-@Article{chen2020,
+@Article{rs12101662,
 AUTHOR = {Chen, Hao and Shi, Zhenwei},
 TITLE = {A Spatial-Temporal Attention-Based Method and a New Dataset for Remote Sensing Image Change Detection},
 JOURNAL = {Remote Sensing},

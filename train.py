@@ -22,8 +22,8 @@ def seed_torch(seed=2019):
 
 
 # set seeds
-seed_torch(2019)
-
+# seed_torch(2019)
+ifSaveImage = False
 
 def make_val_opt(opt):
 
@@ -31,18 +31,19 @@ def make_val_opt(opt):
     val_opt.preprocess = ''  #
     # hard-code some parameters for test
     val_opt.num_threads = 0   # test code only supports num_threads = 1
-    val_opt.batch_size = 1    # test code only supports batch_size = 1
+    val_opt.batch_size = 4    # test code only supports batch_size = 1
     val_opt.serial_batches = True  # disable data shuffling; comment this line if results on randomly chosen images are needed.
     val_opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
     val_opt.angle = 0
     val_opt.display_id = -1   # no visdom display; the test code saves the results to a HTML file.
     val_opt.phase = 'val'
-    val_opt.split = 'val'  # function in jsonDataset
+    val_opt.split = opt.val_split  # function in jsonDataset and ListDataset
     val_opt.isTrain = False
     val_opt.aspect_ratio = 1
     val_opt.results_dir = './results/'
     val_opt.dataroot = opt.val_dataroot
     val_opt.dataset_mode = opt.val_dataset_mode
+    val_opt.dataset_type = opt.val_dataset_type
     val_opt.json_name = opt.val_json_name
     val_opt.eval = True
 
@@ -88,11 +89,13 @@ def val(opt, model):
         img_path = model.get_image_paths()     # get image paths
         if i % 5 == 0:  # save images to an HTML file
             print('processing (%04d)-th image... %s' % (i, img_path))
-        save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
+        if ifSaveImage:
+            save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize)
 
     score = running_metrics.get_scores()
     print_current_acc(log_name, epoch, score)
-    visualizer.plot_current_acc(epoch, float(epoch_iter) / dataset_size, score)
+    if opt.display_id > 0:
+        visualizer.plot_current_acc(epoch, float(epoch_iter) / dataset_size, score)
     webpage.save()  # save the HTML
 
     return score[metric_name]
@@ -124,7 +127,7 @@ if __name__ == '__main__':
         iter_data_time = time.time()    # timer for data loading per iteration
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         model.train()
-
+       # miou_current = val(opt, model)
         for i, data in enumerate(dataset):  # inner loop within one epoch
             iter_start_time = time.time()  # timer for computation per iteration
             if total_iters % opt.print_freq == 0:
@@ -136,10 +139,11 @@ if __name__ == '__main__':
 
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
-            if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
-                save_result = total_iters % opt.update_html_freq == 0
-                model.compute_visuals()
-                visualizer.display_current_results(model.get_current_visuals(), epoch, save_result)
+            if ifSaveImage:
+                if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
+                    save_result = total_iters % opt.update_html_freq == 0
+                    model.compute_visuals()
+                    visualizer.display_current_results(model.get_current_visuals(), epoch, save_result)
             if total_iters % opt.print_freq == 0:   # print training losses and save logging information to the disk
                 losses = model.get_current_losses()
                 t_comp = (time.time() - iter_start_time) / opt.batch_size

@@ -5,7 +5,7 @@ It also includes common transformation functions (e.g., get_transform, __scale_w
 import random
 import numpy as np
 import torch.utils.data as data
-from PIL import Image
+from PIL import Image,ImageFilter
 import torchvision.transforms as transforms
 from abc import ABC, abstractmethod
 import math
@@ -93,6 +93,9 @@ def get_transform(opt, params=None, grayscale=False, method=Image.BICUBIC,
     if 'resize' in opt.preprocess:
         osize = [opt.load_size, opt.load_size]
         transform_list.append(transforms.Resize(osize, method))
+    #  gaussian blur
+    if 'blur' in opt.preprocess:
+        transform_list.append(transforms.Lambda(lambda img: __blur(img)))
 
     if 'rotate' in opt.preprocess and test==False:
         if params is None:
@@ -108,7 +111,6 @@ def get_transform(opt, params=None, grayscale=False, method=Image.BICUBIC,
             transform_list.append(transforms.Lambda(lambda img: __crop(img, params['crop_pos'],
                                                                        opt.crop_size)))
 
-
     if not opt.no_flip:
         if params is None:
             transform_list.append(transforms.RandomHorizontalFlip())
@@ -121,17 +123,30 @@ def get_transform(opt, params=None, grayscale=False, method=Image.BICUBIC,
                                                 (0.5, 0.5, 0.5))]
     return transforms.Compose(transform_list)
 
+def __blur(img):
+    if img.mode == 'RGB':
+        img = img.filter(ImageFilter.GaussianBlur(radius=random.random()))
+    return img
 
 def __rotate(img, degree):
-
-    img2 = img.convert('RGBA')
-    rot = img2.rotate(degree,expand=1)
-    # a white image same size as rotated image
-    fff = Image.new('RGBA', rot.size, (0,) * 4)
-    # create a composite image using the alpha layer of rot as a mask
-    out = Image.composite(rot, fff, rot)
-    img = out.convert(img.mode)
-    return img
+    if img.mode =='RGB':
+        # set img padding == 128
+        img2 = img.convert('RGBA')
+        rot = img2.rotate(degree,expand=1)
+        fff = Image.new('RGBA', rot.size, (128,) * 4)  # 灰色
+        out = Image.composite(rot, fff, rot)
+        img = out.convert(img.mode)
+        return img
+    else:
+        # set label padding == 0
+        img2 = img.convert('RGBA')
+        rot = img2.rotate(degree,expand=1)
+        # a white image same size as rotated image
+        fff = Image.new('RGBA', rot.size, (255,) * 4)
+        # create a composite image using the alpha layer of rot as a mask
+        out = Image.composite(rot, fff, rot)
+        img = out.convert(img.mode)
+        return img
 
 
 def __crop(img, pos, size):
@@ -139,15 +154,24 @@ def __crop(img, pos, size):
     ow, oh = img.size
     x1, y1 = pos
     tw = th = size
+    # print('imagesize:',ow,oh)
+    # only 图像尺寸大于截取尺寸才截取，否则要padding
     if (ow > tw and oh > th):
         return img.crop((x1, y1, x1 + tw, y1 + th))
+
     size = [size, size]
+    if img.mode == 'RGB':
+        new_image = Image.new('RGB', size, (128, 128, 128))
+        new_image.paste(img, (int((1+size[1] - img.size[0]) / 2),
+                              int((1+size[0] - img.size[1]) / 2)))
 
-    new_image = Image.new(img.mode, size, 0)
-    new_image.paste(img, (int((1 + size[1] - img.size[0]) / 2),
-                          int((1 + size[0] - img.size[1]) / 2)))
-    return new_image
-
+        return new_image
+    else:
+        new_image = Image.new(img.mode, size, 255)
+        # upper left corner
+        new_image.paste(img, (int((1 + size[1] - img.size[0]) / 2),
+                              int((1 + size[0] - img.size[1]) / 2)))
+        return new_image
 
 def __flip(img, flip):
     if flip:

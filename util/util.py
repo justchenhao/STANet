@@ -4,12 +4,27 @@ import torch
 import numpy as np
 from PIL import Image
 import os
+import ntpath
+
+
+def save_images(images, img_dir, name):
+    """save images in img_dir, with name
+    iamges: torch.float, B*C*H*W
+    img_dir: str
+    name: list [str]
+    """
+    for i, image in enumerate(images):
+        print(image.shape)
+        image_numpy = tensor2im(image.unsqueeze(0),normalize=False)*255
+        basename = os.path.basename(name[i])
+        print('name:', basename)
+        save_path = os.path.join(img_dir,basename)
+        save_image(image_numpy,save_path)
 
 
 def save_visuals(visuals,img_dir,name):
     """
     """
-    import ntpath
     name = ntpath.basename(name)
     name = name.split(".")[0]
     print(name)
@@ -39,6 +54,7 @@ def tensor2im(input_image, imtype=np.uint8, normalize=True):
         image_numpy = np.transpose(image_numpy, (1, 2, 0))
         if normalize:
             image_numpy = (image_numpy + 1) / 2.0 * 255.0  # post-processing: tranpose and scaling
+
     else:  # if it is a numpy array, do nothing
         image_numpy = input_image
     return image_numpy.astype(imtype)

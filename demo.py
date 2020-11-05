@@ -3,10 +3,11 @@ from options.test_options import TestOptions
 from data import create_dataset
 from models import create_model
 import os
-from util.util import save_visuals
-from util.metrics import AverageMeter
+from util.util import save_images
 import numpy as np
 from util.util import mkdir
+from PIL import Image
+
 
 def make_val_opt(opt):
 
@@ -27,70 +28,55 @@ def make_val_opt(opt):
     return opt
 
 
-def print_current_acc(log_name, epoch, score):
-    """print current acc on console; also save the losses to the disk
-    Parameters:
-    """
-
-    message = '(epoch: %s) ' % str(epoch)
-    for k, v in score.items():
-        message += '%s: %.3f ' % (k, v)
-    print(message)  # print the message
-    with open(log_name, "a") as log_file:
-        log_file.write('%s\n' % message)  # save the message
-
 
 def val(opt):
 
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)               # regular setup: load and print networks; create schedulers
-    save_path = os.path.join(opt.checkpoints_dir, opt.name, '%s_%s' % (opt.phase, opt.epoch))
+    save_path = opt.results_dir
     mkdir(save_path)
     model.eval()
-    # create a logging file to store training losses
-    log_name = os.path.join(opt.checkpoints_dir, opt.name, 'val1_log.txt')
-    with open(log_name, "a") as log_file:
-        now = time.strftime("%c")
-        log_file.write('================ val acc (%s) ================\n' % now)
 
-    running_metrics = AverageMeter()
     for i, data in enumerate(dataset):
         if i >= opt.num_test:  # only apply our model to opt.num_test images.
             break
         model.set_input(data)  # unpack data from data loader
-        score = model.test(val=True)           # run inference return confusion_matrix
-        running_metrics.update(score)
+        pred = model.test(val=False)           # run inference return pred
 
-        visuals = model.get_current_visuals()  # get image results
         img_path = model.get_image_paths()     # get image paths
         if i % 5 == 0:  # save images to an HTML file
             print('processing (%04d)-th image... %s' % (i, img_path))
 
-        save_visuals(visuals,save_path,img_path[0])
-    score = running_metrics.get_scores()
-    print_current_acc(log_name, opt.epoch, score)
+        save_images(pred, save_path, img_path)
+
+
+def pred_image(data_root, results_dir):
+    opt = TestOptions().parse()   # get training options
+    opt = make_val_opt(opt)
+    opt.phase = 'test'
+    opt.dataset_mode = 'changedetection'
+    opt.n_class = 2
+    opt.SA_mode = 'PAM'
+    opt.arch = 'mynet3'
+    opt.model = 'CDFA'
+    opt.epoch = 'pam'
+    opt.num_test = np.inf
+    opt.name = 'pam'
+    opt.dataroot = data_root
+    opt.results_dir = results_dir
+
+    val(opt)
 
 
 if __name__ == '__main__':
-    opt = TestOptions().parse()   # get training options
-    opt = make_val_opt(opt)
-    opt.phase = 'val'
-    opt.dataroot = 'path-to-LEVIR-CD-test'
-
-    opt.dataset_mode = 'changedetection'
-
-    opt.n_class = 2
-
-    opt.SA_mode = 'PAM'
-    opt.arch = 'mynet3'
-
-    opt.model = 'CDFA'
-
-    opt.name = 'pam'
-    opt.results_dir = './results/'
-
-    opt.epoch = '78_F1_1_0.88780'
-    opt.num_test = np.inf
-
-    val(opt)
+    # define the data_root and the results_dir
+    # note:
+    # data_root should have such structure:
+    # ├─A
+    # ├─B
+    # A for before images
+    # B for after images
+    data_root = './samples'
+    results_dir = './samples/output/'
+    pred_image(data_root, results_dir)

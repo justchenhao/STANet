@@ -217,6 +217,54 @@ class BaseModel(ABC):
         visual_ret[name] = getattr(self, name)
         return visual_ret
 
+    def pred_large(self, A, B, input_size=256, stride=0):
+        """
+        输入前后时相的大图，获得预测结果
+        假定预测结果中心部分为准确，边缘padding = (input_size-stride)/2
+        :param A: tensor, N*C*H*W
+        :param B: tensor, N*C*H*W
+        :param input_size: int, 输入网络的图像size
+        :param stride: int, 预测时的跨步
+        :return: pred, tensor, N*1*H*W
+        """
+        import math
+        import numpy as np
+        n, c, h, w = A.shape
+        assert A.shape == B.shape
+        # 分块数量
+        n_h = math.ceil((h - input_size) / stride) + 1
+        n_w = math.ceil((w - input_size) / stride) + 1
+        # 重新计算长宽
+        new_h = (n_h - 1) * stride + input_size
+        new_w = (n_w - 1) * stride + input_size
+        print("new_h: ", new_h)
+        print("new_w: ", new_w)
+        print("n_h: ", n_h)
+        print("n_w: ", n_w)
+        new_A = torch.zeros([n, c, new_h, new_w], dtype=torch.float32)
+        new_B = torch.zeros([n, c, new_h, new_w], dtype=torch.float32)
+        new_A[:, :, :h, :w] = A
+        new_B[:, :, :h, :w] = B
+        new_pred = torch.zeros([n, 1, new_h, new_w], dtype=torch.uint8)
+        del A
+        del B
+        #
+        for i in range(0, new_h - input_size + 1, stride):
+            for j in range(0, new_w - input_size + 1, stride):
+                left = j
+                right = input_size + j
+                top = i
+                bottom = input_size + i
+                patch_A = new_A[:, :, top:bottom, left:right]
+                patch_B = new_B[:, :, top:bottom, left:right]
+                # print(left,' ',right,' ', top,' ', bottom)
+                self.A = patch_A.to(self.device)
+                self.B = patch_B.to(self.device)
+                with torch.no_grad():
+                    patch_pred = self.forward()
+                    new_pred[:, :, top:bottom, left:right] = patch_pred.detach().cpu()
+        pred = new_pred[:, :, :h, :w]
+        return pred
 
     def load_networks(self, epoch):
         """Load all the networks from the disk.
@@ -236,13 +284,14 @@ class BaseModel(ABC):
                 # if you are using PyTorch newer than 0.4 (e.g., built from
                 # GitHub source), you can remove str() on self.device
                 state_dict = torch.load(load_path, map_location=str(self.device))
+                
                 if hasattr(state_dict, '_metadata'):
                     del state_dict._metadata
                 # patch InstanceNorm checkpoints prior to 0.4
                 for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
                     self.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
                     # print(key)
-                net.load_state_dict(state_dict)
+                net.load_state_dict(state_dict,strict=False)
 
     def print_networks(self, verbose):
         """Print the total number of parameters in the network and (if verbose) network architecture

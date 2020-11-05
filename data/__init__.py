@@ -1,6 +1,9 @@
 import importlib
 import torch.utils.data
 from data.base_dataset import BaseDataset
+import torch
+from torch.utils.data import ConcatDataset
+from data.data_config import get_dataset_info
 
 
 def find_dataset_using_name(dataset_name):
@@ -47,18 +50,41 @@ def create_dataset(opt):
     return dataset
 
 
+def create_single_dataset(opt, dataset_type_):
+    # return dataset_class
+    dataset_class = find_dataset_using_name('list')
+    # get dataset root
+    opt.dataroot = get_dataset_info(dataset_type_)
+    return dataset_class(opt)
+
+
 class CustomDatasetDataLoader():
     """Wrapper class of Dataset class that performs multi-threaded data loading"""
 
     def __init__(self, opt):
         """Initialize this class
-
         Step 1: create a dataset instance given the name [dataset_mode]
         Step 2: create a multi-threaded data loader.
         """
         self.opt = opt
-        dataset_class = find_dataset_using_name(opt.dataset_mode)
-        self.dataset = dataset_class(opt)
+        print(opt.dataset_mode)
+        if opt.dataset_mode == 'concat':
+            #  叠加多个数据集
+            datasets = []
+            #  获取concat的多个数据集列表
+            self.dataset_type = opt.dataset_type.split(',')
+            #  去除“,”的影响
+            if self.dataset_type[-1] is '':
+                self.dataset_type = self.dataset_type[:-1]
+            for dataset_type_ in self.dataset_type:
+                dataset_ = create_single_dataset(opt, dataset_type_)
+                datasets.append(dataset_)
+            self.dataset = ConcatDataset(datasets)
+        else:
+            dataset_class = find_dataset_using_name(opt.dataset_mode)
+
+            self.dataset = dataset_class(opt)
+
         print("dataset [%s] was created" % type(self.dataset).__name__)
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,
