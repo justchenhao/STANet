@@ -7,6 +7,8 @@ Here, we provide the pytorch implementation of the spatial-temporal attention ne
 ![image-20200601213320103](/src/stanet-overview.png)
 
 ## Change log
+20210112:
+- add the pretraining weight of PAM. [baidupan link](https://pan.baidu.com/s/1O1kg7JWunqd87ajtVMM6pg), code: 2rja
 
 20201105：
 
