@@ -7,7 +7,12 @@ Here, we provide the pytorch implementation of the spatial-temporal attention ne
 ![image-20200601213320103](/src/stanet-overview.png)
 
 ## Change log
+20230311：
+
+- We have supplemented geospatial information (e.g., latitude and longitude coordinates) for each sample in LEVIR_CD. Specifically, we provide a `geojson` file and a `json` file, both of which contains the correspondence of the sample name and the geospatial location. Files and more information can be seen in the `LEVIR_CD_spatial_info` folder. 
+
 20210112:
+
 - add the pretraining weight of PAM. [baidupan link](https://pan.baidu.com/s/1O1kg7JWunqd87ajtVMM6pg), code: 2rja
 
 20201105：
